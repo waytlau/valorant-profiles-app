@@ -1,74 +1,73 @@
-// server/index.js
+// backend/index.js
+require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
-const cors = require('cors');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const RIOT_API_KEY = process.env.RIOT_API_KEY;
-const BASE_URL = 'https://na1.api.riotgames.com/lol'; // Replace <region> with desired region (e.g., na1, euw1)
+const cors = require('cors');
+const morgan = require('morgan');
 
-// Middleware
-app.use(cors());
+// Middleware to parse JSON requests
 app.use(express.json());
 
-// Helper function to make requests to Riot API
-const riotRequest = async (endpoint, params = {}) => {
-  try {
-    const response = await axios.get(`${BASE_URL}${endpoint}`, {
-      params: { ...params, api_key: RIOT_API_KEY },
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching ${endpoint}:`, error.response ? error.response.data : error.message);
-    throw error;
-  }
-};
+// Define a route to fetch PUUID by Riot ID
+app.get('/api/get-puuid', async (req, res) => {
+  const { gameName, tagLine } = req.query;
 
-// Route to get summoner by name
-app.get('/api/summoner', async (req, res) => {
-  const { name, region } = req.query;
-  if (!name || !region) {
-    return res.status(400).json({ error: 'Missing name or region query parameters.' });
+  if (!gameName || !tagLine) {
+    return res.status(400).json({ error: 'gameName and tagLine are required' });
   }
+
   try {
-    const data = await riotRequest(`/summoner/v4/summoners/by-name/${encodeURIComponent(name)}`, { region });
-    res.json(data);
+    const response = await axios.get(
+      `https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
+      {
+        headers: {
+          'X-Riot-Token': process.env.RIOT_API_KEY,
+        },
+      }
+    );
+    res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch summoner data.' });
+    console.error('Error fetching PUUID:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({ error: error.response?.data || 'Internal Server Error' });
   }
 });
 
-// Route to get league entries
-app.get('/api/league', async (req, res) => {
-  const { encryptedSummonerId, region } = req.query;
-  if (!encryptedSummonerId || !region) {
-    return res.status(400).json({ error: 'Missing encryptedSummonerId or region query parameters.' });
+// Define a route to fetch summoner data by PUUID
+app.get('/api/get-summoner', async (req, res) => {
+  const { puuid, region } = req.query;
+
+  if (!puuid || !region) {
+    return res.status(400).json({ error: 'puuid and region are required' });
   }
+
   try {
-    const data = await riotRequest(`/league/v4/entries/by-summoner/${encryptedSummonerId}`, { region });
-    res.json(data);
+    const response = await axios.get(
+      `https://${region}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}`,
+      {
+        headers: {
+          'X-Riot-Token': process.env.RIOT_API_KEY,
+        },
+      }
+    );
+    res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch league data.' });
+    console.error('Error fetching summoner data:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({ error: error.response?.data || 'Internal Server Error' });
   }
 });
 
-// Route to get match details
-app.get('/api/match', async (req, res) => {
-  const { matchId, region } = req.query;
-  if (!matchId || !region) {
-    return res.status(400).json({ error: 'Missing matchId or region query parameters.' });
-  }
-  try {
-    const data = await riotRequest(`/match/v4/matches/${matchId}`, { region });
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch match data.' });
-  }
-});
-
-// Start Server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
+});
+// Enable CORS for all routes
+app.use(cors());
+
+app.use(morgan('combined'));
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Internal Server Error' });
 });

@@ -1,31 +1,18 @@
-// frontend-new/src/App.jsx
-import React from 'react';
+// src/App.jsx
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Home from './pages/Home';
 import PlayerLookup from './pages/PlayerLookup';
 import PlayerProfile from './pages/PlayerProfile';
-import Login from './pages/Login';
-import SignUp from './pages/SignUp';
-import ProtectedRoute from './components/ProtectedRoute';
+import Navbar from './components/Navbar';
 
 function App() {
   return (
     <Router>
       <Navbar />
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<PlayerLookup />} />
         <Route path="/lookup" element={<PlayerLookup />} />
-        <Route
-          path="/profile/:id"
-          element={
-            <ProtectedRoute>
-              <PlayerProfile />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
+        <Route path="/profile/:puuid" element={<PlayerProfile />} />
+        {/* Add other routes as needed */}
       </Routes>
     </Router>
   );

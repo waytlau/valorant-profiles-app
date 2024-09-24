@@ -1,7 +1,7 @@
 // frontend-new/src/components/LikeDislike.jsx
 import React, { useEffect, useState } from 'react';
 import { doc, getDoc, updateDoc, increment, deleteField } from 'firebase/firestore';
-import { auth } from '../firebase';
+import { db, auth } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 function LikeDislike({ playerId }) {

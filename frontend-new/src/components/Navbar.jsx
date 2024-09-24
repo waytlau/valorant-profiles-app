@@ -32,9 +32,10 @@ function Navbar() {
           {error && <span className="text-red-500 mx-2">Error: {error.message}</span>}
           {user ? (
             <>
-              <span className="text-gray-300 mx-2">
-                {user.displayName || user.email}
-              </span>
+              {/* Wrap the username with Link to /profile/me */}
+              <Link to="/profile/me" className="text-gray-300 hover:text-white mx-2">
+                {user.displayName || user.email.split('@')[0]}
+              </Link>
               <button
                 onClick={handleLogout}
                 className="text-gray-300 hover:text-white mx-2"
