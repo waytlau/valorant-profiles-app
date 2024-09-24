@@ -1,4 +1,4 @@
-// frontend-new/src/App.jsx
+// src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -6,9 +6,7 @@ import Home from './pages/Home';
 import PlayerLookup from './pages/PlayerLookup';
 import PlayerProfile from './pages/PlayerProfile';
 import Login from './pages/Login';
-import SignUp from './pages/SignUp';
-import ProtectedRoute from './components/ProtectedRoute';
-import TestFirestore from './components/TestFirestore'; // Import TestFirestore
+import Register from './pages/Register';
 
 function App() {
   return (
@@ -17,17 +15,9 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/lookup" element={<PlayerLookup />} />
-        <Route
-          path="/profile/:id"
-          element={
-            <ProtectedRoute>
-              <PlayerProfile />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/profile/:id" element={<PlayerProfile />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/test-firestore" element={<TestFirestore />} /> {/* Add TestFirestore Route */}
+        <Route path="/register" element={<Register />} />
       </Routes>
     </Router>
   );

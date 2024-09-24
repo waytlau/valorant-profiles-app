@@ -1,7 +1,13 @@
 // src/pages/PlayerProfile.js
+// frontend-new/src/pages/PlayerProfile.jsx
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import { useParams, useLocation } from 'react-router-dom';
+import { fetchLeagueEntries, fetchMatchDetails } from '../api/riotApi';
+import { db, auth } from '../firebase';
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import Comment from '../components/Comment';
+
 
 function PlayerProfile() {
   const { id } = useParams();
@@ -9,6 +15,8 @@ function PlayerProfile() {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [error, setError] = useState('');
+  const [user, loadingAuth, errorAuth] = useAuthState(auth);
+  
 
   useEffect(() => {
     // Fetch player details
@@ -25,11 +33,16 @@ function PlayerProfile() {
     // Fetch player comments
     const fetchComments = async () => {
       try {
-        // Replace with your backend API endpoint for fetching comments
-        const response = await axios.get(`http://localhost:5000/api/players/${id}/comments`);
-        setComments(response.data);
-      } catch (err) {
-        setError('Failed to fetch comments.');
+        const commentsRef = collection(db, 'comments');
+        const q = query(commentsRef, where('playerId', '==', id));
+        const querySnapshot = await getDocs(q);
+        const commentsList = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setComments(commentsList);
+      } catch (error) {
+        console.error('Error fetching comments:', error);
       }
     };
 
@@ -40,18 +53,35 @@ function PlayerProfile() {
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-
+    if (!user) {
+      alert('You must be logged in to comment.');
+      return;
+    }
     try {
-      // Replace with your backend API endpoint for adding a comment
-      const response = await axios.post(`http://localhost:5000/api/players/${id}/comments`, {
-        content: newComment,
+      await addDoc(collection(db, 'comments'), {
+        playerId: id,
+        userId: user.uid,
+        username: user.displayName || user.email,
+        comment: newComment,
+        timestamp: serverTimestamp(),
+        likes: 0,
+        dislikes: 0,
       });
-      setComments([...comments, response.data]);
       setNewComment('');
-    } catch (err) {
-      setError('Failed to add comment.');
+      // Refresh comments
+      const commentsRef = collection(db, 'comments');
+      const q = query(commentsRef, where('playerId', '==', id));
+      const querySnapshot = await getDocs(q);
+      const commentsList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setComments(commentsList);
+    } catch (error) {
+      console.error('Error adding comment:', error);
     }
   };
+  
 
   if (error) {
     return (
@@ -85,18 +115,26 @@ function PlayerProfile() {
             </li>
           ))}
         </ul>
-
-        <form onSubmit={handleAddComment} className="mt-4">
+        <div>
+      {comments.length > 0 ? (
+        comments.map(comment => (
+          <Comment key={comment.id} commentData={comment} />
+        ))
+      ) : (
+        <p>No comments yet. Be the first to comment!</p>
+      )}
+    </div>
+      <form onSubmit={handleAddComment} className="mt-4">
           <textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Leave a comment..."
             className="w-full border border-gray-300 p-2 rounded-md"
-            rows="3"
+            rows="4"
             required
           ></textarea>
           <button type="submit" className="mt-2 bg-green-500 text-white px-4 py-2 rounded-md">
-            Add Comment
+            Submit Comment
           </button>
         </form>
       </div>

@@ -8,7 +8,6 @@ import PlayerProfile from './pages/PlayerProfile';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import ProtectedRoute from './components/ProtectedRoute';
-import TestFirestore from './components/TestFirestore'; // Import TestFirestore
 
 function App() {
   return (
@@ -27,7 +26,6 @@ function App() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
-        <Route path="/test-firestore" element={<TestFirestore />} /> {/* Add TestFirestore Route */}
       </Routes>
     </Router>
   );

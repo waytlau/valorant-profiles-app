@@ -7,3 +7,6 @@
 
 # Environment variables
 .env
+
+#ignoring env file to prevent exposing api
+echo ".env" >> .gitignore
